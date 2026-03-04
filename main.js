@@ -581,6 +581,9 @@ function initChapter1_Flashlight() {
   console.log('%c📁 CASE FILE OPENED: ' + caseName, 'color: #ffaa00; font-weight:bold;');
   const consoleLines = document.querySelector('#console-lines');
 
+  // ── GSAP STICKY TEXT: pin ch1 text to viewport, slam out when leaving ch1 ──
+  initCh1StickyText();
+
   function addConsoleLine(html, cls) {
     if (!consoleLines) return;
     const div = document.createElement('div');
@@ -624,6 +627,70 @@ function initChapter1_Flashlight() {
         console.log('%c✅ All 5 clues found!', 'color: #00ff41; font-weight: bold;');
       }
     });
+  });
+}
+
+
+
+/* ─────────────────────────────────────────────
+   CH1 STICKY TEXT: stays with scroll, slams out
+   ───────────────────────────────────────────── */
+function initCh1StickyText() {
+  const panel = document.querySelector('#ch1-text-panel');
+  if (!panel || prefersReducedMotion) return;
+
+  // Start items invisible and animate them in
+  const items = panel.querySelectorAll('.chapter-label, .chapter-title, .chapter-subtitle, .chapter-body, .code-block, .metaphor-line');
+  gsap.set(items, { opacity: 0, x: -60 });
+  gsap.to(items, {
+    opacity: 1, x: 0, duration: 0.6, stagger: 0.12, ease: 'power2.out',
+    delay: 0.3
+  });
+
+  // Create ScrollTrigger: when ch1 starts to leave, slam text into the left wall and fade
+  const ch1 = document.querySelector('#chapter-1');
+  const wrapper = document.querySelector('#scroll-wrapper');
+  if (!ch1 || !wrapper) return;
+
+  // When horizontal scroll moves past ch1, slam text and hide
+  // We use a custom update on the main ScrollTrigger
+  ScrollTrigger.create({
+    trigger: '#scroll-wrapper',
+    start: 'top top',
+    end: () => '+=' + (document.querySelector('#scroll-track').scrollWidth),
+    scrub: false,
+    onUpdate: (self) => {
+      const totalChapters = document.querySelectorAll('.chapter').length;
+      const chapterProgress = self.progress * (totalChapters - 1);
+      const ch1Progress = Math.max(0, Math.min(1, chapterProgress)); // 0 to 1 within ch1
+
+      if (ch1Progress < 0.85) {
+        // In ch1: panel is sticky (fixed) and visible
+        gsap.set(panel, { opacity: 1, x: 0, pointerEvents: 'auto' });
+      } else {
+        // Leaving ch1: slam items into the wall (throw left hard)
+        const leaveProgress = (ch1Progress - 0.85) / 0.15; // 0→1 during exit
+        if (leaveProgress > 0 && leaveProgress <= 1) {
+          gsap.set(panel, {
+            x: -leaveProgress * 500,
+            opacity: 1 - leaveProgress,
+            pointerEvents: 'none'
+          });
+        } else if (leaveProgress > 1) {
+          gsap.set(panel, { opacity: 0, pointerEvents: 'none' });
+        }
+      }
+
+      // When scrolling BACK into ch1, panel comes back
+      if (ch1Progress < 0.7) {
+        const returnProgress = Math.min(1, ch1Progress / 0.7);
+        if (returnProgress > 0.01) {
+          gsap.set(panel, {
+            x: 0, opacity: 1, pointerEvents: 'auto'
+          });
+        }
+      }
+    }
   });
 }
 
@@ -680,10 +747,53 @@ function initChapter2_Interrogation() {
     }
   }
 
+  // Lamp toggle
+  const lampBtn = document.querySelector('#lamp-toggle-btn');
+  let lampOn = true;
+  const lampCone = document.querySelector('#lamp-cone');
+  if (lampBtn) {
+    lampBtn.addEventListener('click', () => {
+      lampOn = !lampOn;
+      lampBtn.classList.toggle('lamp--off', !lampOn);
+      lampBtn.setAttribute('aria-pressed', String(lampOn));
+      const ch2 = document.querySelector('#chapter-2');
+      if (lampCone) {
+        gsap.to(lampCone, { opacity: lampOn ? 1 : 0, duration: 0.6 });
+      }
+      if (ch2) {
+        ch2.classList.toggle('lamp-off', !lampOn);
+        // Animate room brightness
+        gsap.to(ch2, { backgroundColor: lampOn ? '' : '#010005', duration: 0.7 });
+      }
+      // Update suspect cards visibility
+      const cards2 = document.querySelectorAll('.suspect-card img');
+      if (!lampOn) {
+        cards2.forEach(img => { img.style.filter = 'brightness(0.1) saturate(0)'; });
+      } else {
+        cards2.forEach(img => {
+          const card = img.closest('.suspect-card');
+          if (card.classList.contains('lit') || card.classList.contains('active')) {
+            img.style.filter = 'brightness(1) saturate(1)';
+          } else if (card.classList.contains('interrogated')) {
+            img.style.filter = 'brightness(.55) saturate(.35)';
+          } else {
+            img.style.filter = 'brightness(.4) saturate(.15)';
+          }
+        });
+      }
+      console.log('%c💡 Lamp: ' + (lampOn ? 'ON' : 'OFF'), 'color: #ffaa00;');
+    });
+  }
+
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
+      // Find the last active card and keep it lit after closing
+      const activeCard = document.querySelector('.suspect-card.active');
+      if (activeCard) {
+        activeCard.classList.remove('active');
+        activeCard.classList.add('lit'); // stays bright and colored
+      }
       panel.classList.remove('open');
-      cards.forEach(c => c.classList.remove('active'));
       if (clReadout) clReadout.textContent = '[ ]';
     });
   }
@@ -692,7 +802,8 @@ function initChapter2_Interrogation() {
     card.addEventListener('click', function() {
       const data = SUSPECTS[this.dataset.suspect];
       if (!data) return;
-      cards.forEach(c => c.classList.remove('active'));
+      // Remove active and lit from all cards when opening a new one
+      cards.forEach(c => { c.classList.remove('active'); c.classList.remove('lit'); });
       this.classList.add('active');
 
       let isNew = false;
@@ -787,13 +898,33 @@ function initChapter3_EvidenceWeb() {
       svg.setAttribute('viewBox', `0 0 ${r.width} ${r.height}`);
     }
   }, 600);
+
+  // When all items are clicked, hide the center panel
+  const ch3Panel = document.querySelector('#ch3-text-panel');
+  if (ch3Panel) {
+    // Fade the panel when first board item is clicked
+    const allItems2 = document.querySelectorAll('.evidence-card, .suspect-photo--board');
+    allItems2.forEach(item => {
+      item.addEventListener('click', function() {
+        if (ch3Panel && !ch3Panel.classList.contains('faded')) {
+          ch3Panel.classList.add('faded');
+          gsap.to(ch3Panel, { opacity: 0.15, duration: 0.5 });
+        }
+      }, { once: false });
+    });
+  }
 }
 
 function getElementCenter(el, boardRect) {
   const r = el.getBoundingClientRect();
+  // For evidence cards, target the pin (top center); for photos target center
+  const isCard = el.classList.contains('evidence-card');
+  const isPhoto = el.classList.contains('suspect-photo--board');
   return {
     x: r.left + r.width  / 2 - boardRect.left,
-    y: r.top  + r.height / 2 - boardRect.top
+    y: isCard ? r.top + 6 - boardRect.top :  // aim at pin
+       isPhoto ? r.top + 20 - boardRect.top : // aim at pin
+       r.top  + r.height / 2 - boardRect.top
   };
 }
 
@@ -918,18 +1049,33 @@ function developPhotos() {
   });
 
   // Develop evidence SVG photos (opacity 0 → 1)
-  document.querySelectorAll('.evidence-photo-content').forEach((content, i) => {
+  document.querySelectorAll('.evidence-photo-content').forEach((evidenceContent, i) => {
     setTimeout(() => {
-      content.classList.add('developed');
-      content.style.opacity = '1';
-      const canvas = content.closest('.photo-frame--evidence').querySelector('.drip-canvas');
+      evidenceContent.classList.add('developed');
+      evidenceContent.style.opacity = '1';
+      const canvas = evidenceContent.closest('.photo-frame--evidence').querySelector('.drip-canvas');
       if (canvas) {
         canvas.classList.add('active');
         animateWaterDrip(canvas);
       }
-      const caption = content.closest('.darkroom-photo').querySelector('.photo-caption');
-      if (caption) console.log('%c🖼 Evidence developing: ' + caption.textContent, 'color: #9b4dff;');
+      // Reveal evidence label when photo develops
+      const label = evidenceContent.closest('.photo-frame--evidence').querySelector('.photo-evidence-label');
+      if (label) label.classList.add('revealed');
+      // Also reveal caption
+      const caption = evidenceContent.closest('.darkroom-photo').querySelector('.photo-caption');
+      if (caption) {
+        gsap.fromTo(caption, { opacity: 0 }, { opacity: 1, duration: 1.2, delay: 0.5 });
+        console.log('%c🖼 Evidence developing: ' + caption.textContent, 'color: #9b4dff;');
+      }
     }, 800 + i * 450);
+  });
+
+  // Also reveal labels on suspect photos
+  document.querySelectorAll('.photo-frame img').forEach((img, i) => {
+    setTimeout(() => {
+      const label = img.closest('.photo-frame').querySelector('.photo-evidence-label');
+      if (label) label.classList.add('revealed');
+    }, 600 + i * 550 + 600);
   });
 }
 
@@ -1050,10 +1196,47 @@ function startDarkroomParallax() {
 /* ─────────────────────────────────────────────
    CHAPTER 5: CASE FILE — localStorage
    ───────────────────────────────────────────── */
+// ── RANDOM MURDER SELECTION: ensures no repeats in a row ──
+const MURDERERS = ['doctor', 'widow', 'butler', 'nephew'];
+let murdererPool = [];
+let lastMurderer = null;
+
+function pickMurderer() {
+  if (murdererPool.length === 0) {
+    murdererPool = [...MURDERERS].filter(m => m !== lastMurderer);
+    // Shuffle
+    for (let i = murdererPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [murdererPool[i], murdererPool[j]] = [murdererPool[j], murdererPool[i]];
+    }
+  }
+  lastMurderer = murdererPool.pop();
+  return lastMurderer;
+}
+
+const MURDERER_DATA = {
+  doctor:  { name: 'DR. HARLOW',  img: 'assets/images/suspectDoctor.png',  reason: 'The blackmail victim became the victim. He silenced the one man who could destroy him.', style: 'color:#cc0000;' },
+  widow:   { name: 'THE WIDOW',   img: 'assets/images/suspectWidow.png',   reason: 'She withdrew the divorce papers — then withdrew the man. $4.2M and no witnesses.', style: 'color:#cc0000;' },
+  butler:  { name: 'THE BUTLER',  img: 'assets/images/suspectButler.png',  reason: 'Forty years of service. Dismissed without a word. He kept the key — and used it.', style: 'color:#cc0000;' },
+  nephew:  { name: 'THE NEPHEW',  img: 'assets/images/suspectNephew.png', reason: 'Disinherited. Desperate. The monogram D.M. left at the scene sealed it.', style: 'color:#cc0000;' }
+};
+
 function initChapter5_CaseFile() {
   const saveBtn = document.querySelector('#save-btn');
   const loadBtn = document.querySelector('#load-btn');
   const status  = document.querySelector('#storage-status');
+
+  // Inject random murderer reveal into the overview page
+  const folderTitle = document.querySelector('.folder-title');
+  if (folderTitle) {
+    const murdererKey = pickMurderer();
+    const mData = MURDERER_DATA[murdererKey];
+    const revealEl = document.createElement('div');
+    revealEl.style.cssText = 'margin-top:14px;padding:10px 14px;background:rgba(139,0,0,.08);border-left:3px solid #8b0000;font-family:var(--font-ui);font-size:.7rem;';
+    revealEl.innerHTML = `<div style="font-size:.55rem;letter-spacing:.2em;color:#8b5020;text-transform:uppercase;margin-bottom:4px;">DETECTIVE'S CONCLUSION</div><div style="color:#8b0000;font-weight:bold;font-size:.85rem;font-family:var(--font-display);">THE MURDERER: ${mData.name}</div><div style="color:#5c2000;font-size:.7rem;line-height:1.6;margin-top:4px;">${mData.reason}</div>`;
+    const divider = folderTitle.nextElementSibling;
+    if (divider) divider.after(revealEl);
+  }
 
   document.querySelectorAll('.folder-tab').forEach(tab => {
     tab.addEventListener('click', function() {
@@ -1187,6 +1370,22 @@ function setupKeyboard() {
     if (e.key === 'ArrowRight') window.scrollBy({ top: step,  behavior: 'smooth' });
     if (e.key === 'ArrowLeft')  window.scrollBy({ top: -step, behavior: 'smooth' });
   });
+
+  // Touch swipe support for mobile
+  let touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!introComplete) return;
+    const dx = touchStartX - e.changedTouches[0].clientX;
+    const dy = Math.abs(touchStartY - e.changedTouches[0].clientY);
+    if (Math.abs(dx) > 50 && dy < 80) {
+      const step = window.innerWidth * 0.9;
+      window.scrollBy({ top: dx > 0 ? step : -step, behavior: 'smooth' });
+    }
+  }, { passive: true });
 }
 
 function setupNavDots() {

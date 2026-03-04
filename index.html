@@ -2,7 +2,8 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#03020a" />
   <title>Render The Crime — A JavaScript Murder Mystery</title>
   <meta name="description" content="A noir scrollytelling experience teaching JavaScript through a murder investigation." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -322,10 +323,10 @@
         </div>
       </div>
 
-      <div class="text-panel text-panel--left text-panel--top" style="z-index:35;">
-        <p class="chapter-label">Chapter 01 — First Contact</p>
-        <h2 class="chapter-title" id="ch1-title">The Alley</h2>
-        <p class="chapter-subtitle">console.log · let · const</p>
+      <div class="text-panel text-panel--left text-panel--top" id="ch1-text-panel" style="z-index:35;">
+        <p class="chapter-label ch1-slam-item">Chapter 01 — First Contact</p>
+        <h2 class="chapter-title ch1-slam-item" id="ch1-title">The Alley</h2>
+        <p class="chapter-subtitle ch1-slam-item">console.log · let · const</p>
         <p class="chapter-body">The browser is dark. Move your mouse — the flashlight follows. Find all 5 clues. Watch the console panel update live each time you find one. That's <code style="color:var(--color-green-term)">console.log</code> talking back.</p>
         <div class="code-block">// const never changes:
 const caseName = "CASE #4471";
@@ -345,12 +346,12 @@ console.log("Clue:", clue);</div>
     <article class="chapter chapter--2" id="chapter-2" aria-labelledby="ch2-title">
 
       <!-- Lamp + downward light cone -->
-      <div class="lamp" aria-hidden="true">
+      <button class="lamp" id="lamp-toggle-btn" aria-label="Toggle interrogation room light" aria-pressed="true">
         <div class="lamp-cord"></div>
         <div class="lamp-shade">
           <div class="lamp-glow"></div>
         </div>
-      </div>
+      </button>
       <!-- Cone: wider at bottom, points DOWN — fixed clip-path -->
       <div id="lamp-cone" aria-hidden="true"></div>
 
@@ -498,12 +499,12 @@ console.log("Clue:", clue);</div>
           <p class="photo-label">THE NEPHEW</p>
         </div>
 
-        <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-family:var(--font-ui);font-size:.54rem;letter-spacing:.25em;color:rgba(144,144,170,.38);text-transform:uppercase;z-index:8;pointer-events:none;">
+        <div id="ch3-click-hint" style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-family:var(--font-ui);font-size:.54rem;letter-spacing:.25em;color:rgba(144,144,170,.38);text-transform:uppercase;z-index:8;pointer-events:none;">
           CLICK CARDS &amp; PHOTOS — WATCH THE WEB FORM
         </div>
       </div>
 
-      <div class="text-panel" style="position:absolute;top:10px;right:8px;z-index:50;background:rgba(3,2,10,.92);border:1px solid rgba(61,127,255,.12);padding:16px;max-width:235px;">
+      <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;background:rgba(3,2,10,.95);border:1px solid rgba(61,127,255,.25);padding:20px;max-width:280px;text-align:center;">
         <p class="chapter-label">Chapter 03 — The System</p>
         <h2 class="chapter-title" id="ch3-title" style="font-size:1.4rem;">The Crime<br>Board</h2>
         <p class="chapter-subtitle" style="font-size:.87rem;">data-* attributes</p>
@@ -532,6 +533,7 @@ svg.appendChild(line);</div>
       <div style="position:absolute;bottom:0;left:0;right:0;height:90px;background:linear-gradient(to top,#0d0904,#1a1208);border-top:2px solid #2a2010;z-index:8;" aria-hidden="true"></div>
 
       <div id="darkroom-instruction" aria-live="polite">TURN OFF THE LIGHTS — WATCH THE EVIDENCE DEVELOP</div>
+      <div id="darkroom-labels-live" aria-live="polite" aria-atomic="false" class="sr-only"></div>
 
       <div id="room-light-switch">
         <label>LIGHT</label>
@@ -562,7 +564,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Photo: DR HARLOW -->
-      <div class="darkroom-photo dr-parallax" data-depth="0.09" style="left:18%;top:44px;" id="drphoto-doctor">
+      <div class="darkroom-photo dr-parallax" data-depth="0.09" style="left:20%;top:44px;" id="drphoto-doctor">
         <div class="photo-string"></div>
         <div class="photo-frame">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -574,7 +576,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Photo: WIDOW -->
-      <div class="darkroom-photo dr-parallax" data-depth="0.07" style="left:33%;top:52px;" id="drphoto-widow">
+      <div class="darkroom-photo dr-parallax" data-depth="0.07" style="left:35%;top:52px;" id="drphoto-widow">
         <div class="photo-string"></div>
         <div class="photo-frame">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -586,7 +588,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Photo: BUTLER -->
-      <div class="darkroom-photo dr-parallax" data-depth="0.10" style="left:48%;top:46px;" id="drphoto-butler">
+      <div class="darkroom-photo dr-parallax" data-depth="0.10" style="left:50%;top:46px;" id="drphoto-butler">
         <div class="photo-string"></div>
         <div class="photo-frame">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -598,7 +600,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Photo: NEPHEW -->
-      <div class="darkroom-photo dr-parallax" data-depth="0.08" style="left:63%;top:50px;" id="drphoto-nephew">
+      <div class="darkroom-photo dr-parallax" data-depth="0.08" style="left:65%;top:50px;" id="drphoto-nephew">
         <div class="photo-string"></div>
         <div class="photo-frame">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -614,7 +616,7 @@ svg.appendChild(line);</div>
       <div style="position:absolute;top:362px;left:2%;right:2%;height:2px;background:linear-gradient(90deg,transparent,rgba(80,60,30,.6) 5%,rgba(80,60,30,.6) 95%,transparent);z-index:9;" aria-hidden="true"></div>
 
       <!-- Evidence: FOOTPRINTS -->
-      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.05" style="left:5%;top:236px;" id="drphoto-footprints">
+      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.05" style="left:8%;top:236px;" id="drphoto-footprints">
         <div class="photo-string photo-string--short"></div>
         <div class="photo-frame photo-frame--evidence">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -642,7 +644,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Evidence: SHELL CASING -->
-      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.08" style="left:22%;top:230px;" id="drphoto-shell">
+      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.08" style="left:26%;top:230px;" id="drphoto-shell">
         <div class="photo-string photo-string--short"></div>
         <div class="photo-frame photo-frame--evidence">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -670,7 +672,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Evidence: MATCHBOOK -->
-      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.06" style="left:39%;top:240px;" id="drphoto-matchbook">
+      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.06" style="left:43%;top:240px;" id="drphoto-matchbook">
         <div class="photo-string photo-string--short"></div>
         <div class="photo-frame photo-frame--evidence">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -703,7 +705,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Evidence: CIGARETTE -->
-      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.09" style="left:56%;top:234px;" id="drphoto-cigarette">
+      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.09" style="left:60%;top:234px;" id="drphoto-cigarette">
         <div class="photo-string photo-string--short"></div>
         <div class="photo-frame photo-frame--evidence">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -734,7 +736,7 @@ svg.appendChild(line);</div>
       </div>
 
       <!-- Evidence: TORN FABRIC -->
-      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.07" style="left:73%;top:238px;" id="drphoto-fabric">
+      <div class="darkroom-photo darkroom-photo--evidence dr-parallax" data-depth="0.07" style="left:77%;top:238px;" id="drphoto-fabric">
         <div class="photo-string photo-string--short"></div>
         <div class="photo-frame photo-frame--evidence">
           <div class="photo-clip" aria-hidden="true"></div>
@@ -810,7 +812,7 @@ getComputedStyle(root)
       </div>
 
       <!-- THE FOLDER — large, centered, close-up in your face -->
-      <div id="folder-system">
+      <div id="folder-system" role="region" aria-label="Case file folder">
 
         <div id="folder-tabs">
           <button class="folder-tab active" data-tab="overview">📋 OVERVIEW</button>
