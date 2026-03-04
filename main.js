@@ -765,33 +765,20 @@ function initChapter2_Interrogation() {
         // Animate room brightness
         gsap.to(ch2, { backgroundColor: lampOn ? '' : '#010005', duration: 0.7 });
       }
-      // Update suspect cards visibility
-      const cards2 = document.querySelectorAll('.suspect-card img');
-      if (!lampOn) {
-        cards2.forEach(img => { img.style.filter = 'brightness(0.1) saturate(0)'; });
-      } else {
-        cards2.forEach(img => {
-          const card = img.closest('.suspect-card');
-          if (card.classList.contains('lit') || card.classList.contains('active')) {
-            img.style.filter = 'brightness(1) saturate(1)';
-          } else if (card.classList.contains('interrogated')) {
-            img.style.filter = 'brightness(.55) saturate(.35)';
-          } else {
-            img.style.filter = 'brightness(.4) saturate(.15)';
-          }
-        });
-      }
+      // Light mode purple tint: add class to chapter for UV blacklight feel
+      const ch2b = document.querySelector('#chapter-2');
+      if (ch2b) ch2b.classList.toggle('lamp-off', !lampOn);
       console.log('%c💡 Lamp: ' + (lampOn ? 'ON' : 'OFF'), 'color: #ffaa00;');
     });
   }
 
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
-      // Find the last active card and keep it lit after closing
+      // Keep the active card lit (full color) after panel closes
       const activeCard = document.querySelector('.suspect-card.active');
       if (activeCard) {
         activeCard.classList.remove('active');
-        activeCard.classList.add('lit'); // stays bright and colored
+        // interrogated class now = full color per CSS, so no extra class needed
       }
       panel.classList.remove('open');
       if (clReadout) clReadout.textContent = '[ ]';
@@ -802,8 +789,8 @@ function initChapter2_Interrogation() {
     card.addEventListener('click', function() {
       const data = SUSPECTS[this.dataset.suspect];
       if (!data) return;
-      // Remove active and lit from all cards when opening a new one
-      cards.forEach(c => { c.classList.remove('active'); c.classList.remove('lit'); });
+      // Remove only 'active' (highlight ring) from others – keep interrogated (full color)
+      cards.forEach(c => c.classList.remove('active'));
       this.classList.add('active');
 
       let isNew = false;
@@ -899,20 +886,8 @@ function initChapter3_EvidenceWeb() {
     }
   }, 600);
 
-  // When all items are clicked, hide the center panel
-  const ch3Panel = document.querySelector('#ch3-text-panel');
-  if (ch3Panel) {
-    // Fade the panel when first board item is clicked
-    const allItems2 = document.querySelectorAll('.evidence-card, .suspect-photo--board');
-    allItems2.forEach(item => {
-      item.addEventListener('click', function() {
-        if (ch3Panel && !ch3Panel.classList.contains('faded')) {
-          ch3Panel.classList.add('faded');
-          gsap.to(ch3Panel, { opacity: 0.15, duration: 0.5 });
-        }
-      }, { once: false });
-    });
-  }
+  // Crime board panel stays visible – it's part of the board, never hides
+  // The strings will draw around/behind it naturally
 }
 
 function getElementCenter(el, boardRect) {
