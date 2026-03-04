@@ -495,10 +495,9 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -40%);
+  transform: translate(-50%, -48%);
   z-index: 30;
-  width: min(75vw, 1000px);
-  max-height: 78vh;
+  width: min(82vw, 920px);
 }
 
 /* Folder tabs */
@@ -524,9 +523,8 @@ body {
   border-radius: 0 4px 4px 4px;
   box-shadow: 4px 6px 20px rgba(0,0,0,.7), inset 0 0 30px rgba(0,0,0,.06),
               0 0 60px rgba(0,0,0,.5);
-  position: relative; overflow: hidden;
-  min-height: 420px;
-  max-height: calc(72vh - 44px);
+  position: relative;
+  height: min(62vh, 480px);
   overflow-y: auto;
 }
 #folder-body::before {
@@ -896,14 +894,15 @@ body {
   pointer-events: none; z-index: 15;
 }
 
-/* CH1 STICKY TEXT PANEL — stays in view until scroll transitions */
+/* CH1 STICKY TEXT PANEL — fixed so it stays while horizontal scroll moves */
 #ch1-text-panel {
-  position: fixed;
+  position: fixed !important;
   left: 28px;
   top: 60px;
   z-index: 1000;
   pointer-events: auto;
   will-change: transform, opacity;
+  /* Initially visible - JS will animate items in */
 }
 
 /* Mobile / accessibility */
@@ -998,15 +997,7 @@ button:focus-visible, [role="button"]:focus-visible {
 /* ARIA live region for skip link */
 #main-story:target { outline: none; }
 
-/* Ch5 folder larger */
-#folder-system {
-  width: min(78vw, 1050px) !important;
-  max-width: 1050px;
-}
-#folder-body {
-  min-height: 420px;
-  max-height: calc(75vh - 50px);
-}
+/* Ch5 folder - real folder proportions */
 
 /* Crime board center panel */
 #ch3-text-panel {
@@ -1074,21 +1065,22 @@ button:focus-visible, [role="button"]:focus-visible {
 #drphoto-fabric     .photo-frame--evidence { width: 115px; }
 #drphoto-fabric     .evidence-photo-content svg { width: 95px; height: 95px; }
 
-/* Darkroom text panel – positioned far left bottom to NOT overlap photos */
+/* Darkroom text panel – RIGHT side, bottom, does NOT overlap any photos */
 #ch4-text-panel {
   position: absolute !important;
-  left: 12px !important;
+  right: 16px !important;
+  left: auto !important;
   bottom: 72px !important;
   top: auto !important;
-  max-width: 220px !important;
-  font-size: 0.82rem;
-  background: rgba(2,1,6,0.94) !important;
-  border: 1px solid rgba(255,170,0,0.15) !important;
+  max-width: 210px !important;
+  font-size: 0.78rem;
+  background: rgba(2,1,6,0.95) !important;
+  border: 1px solid rgba(255,170,0,0.18) !important;
   padding: 14px 12px !important;
   z-index: 40 !important;
 }
-#ch4-text-panel .chapter-title { font-size: 1.4rem !important; }
-#ch4-text-panel .code-block { font-size: .6rem !important; }
+#ch4-text-panel .chapter-title { font-size: 1.3rem !important; }
+#ch4-text-panel .code-block { font-size: .58rem !important; }
 
 /* Crime board – panel stays always visible, never fades */
 #ch3-text-panel {

@@ -558,6 +558,8 @@ function initHorizontalScroll() {
         if (dom.progressBar) dom.progressBar.style.width = (self.progress * 100) + '%';
         if (self.progress > 0.02 && dom.scrollHint) gsap.to(dom.scrollHint, { opacity: 0, duration: 0.4 });
         updateNavDots(Math.round(self.progress * (chapters.length - 1)));
+        // Ch1 text slam animation
+        updateCh1Text(self.progress);
       }
     }
   });
@@ -637,61 +639,69 @@ function initChapter1_Flashlight() {
    ───────────────────────────────────────────── */
 function initCh1StickyText() {
   const panel = document.querySelector('#ch1-text-panel');
-  if (!panel || prefersReducedMotion) return;
+  if (!panel) return;
 
-  // Start items invisible and animate them in
   const items = panel.querySelectorAll('.chapter-label, .chapter-title, .chapter-subtitle, .chapter-body, .code-block, .metaphor-line');
-  gsap.set(items, { opacity: 0, x: -60 });
+
+  if (prefersReducedMotion) {
+    gsap.set(panel, { opacity: 1, x: 0 });
+    gsap.set(items, { opacity: 1, x: 0 });
+    return;
+  }
+
+  // Animate each text item SLAMMING IN from the left on load
+  gsap.set(items, { opacity: 0, x: -120, skewX: -8 });
   gsap.to(items, {
-    opacity: 1, x: 0, duration: 0.6, stagger: 0.12, ease: 'power2.out',
-    delay: 0.3
+    opacity: 1, x: 0, skewX: 0,
+    duration: 0.7, stagger: 0.11,
+    ease: 'power4.out', delay: 0.6
   });
 
-  // Create ScrollTrigger: when ch1 starts to leave, slam text into the left wall and fade
-  const ch1 = document.querySelector('#chapter-1');
-  const wrapper = document.querySelector('#scroll-wrapper');
-  if (!ch1 || !wrapper) return;
+  // Store reference so initHorizontalScroll can call updateCh1Text(progress)
+  window._ch1Panel = panel;
+  window._ch1Slammed = false;
+}
 
-  // When horizontal scroll moves past ch1, slam text and hide
-  // We use a custom update on the main ScrollTrigger
-  ScrollTrigger.create({
-    trigger: '#scroll-wrapper',
-    start: 'top top',
-    end: () => '+=' + (document.querySelector('#scroll-track').scrollWidth),
-    scrub: false,
-    onUpdate: (self) => {
-      const totalChapters = document.querySelectorAll('.chapter').length;
-      const chapterProgress = self.progress * (totalChapters - 1);
-      const ch1Progress = Math.max(0, Math.min(1, chapterProgress)); // 0 to 1 within ch1
+// Called from inside the main horizontal scroll onUpdate
+function updateCh1Text(scrollProgress) {
+  const panel = window._ch1Panel;
+  if (!panel) return;
 
-      if (ch1Progress < 0.85) {
-        // In ch1: panel is sticky (fixed) and visible
-        gsap.set(panel, { opacity: 1, x: 0, pointerEvents: 'auto' });
-      } else {
-        // Leaving ch1: slam items into the wall (throw left hard)
-        const leaveProgress = (ch1Progress - 0.85) / 0.15; // 0→1 during exit
-        if (leaveProgress > 0 && leaveProgress <= 1) {
-          gsap.set(panel, {
-            x: -leaveProgress * 500,
-            opacity: 1 - leaveProgress,
-            pointerEvents: 'none'
-          });
-        } else if (leaveProgress > 1) {
-          gsap.set(panel, { opacity: 0, pointerEvents: 'none' });
-        }
-      }
+  // totalChapters = 5. Ch1 occupies scroll progress 0 → 0.2 (1/5)
+  // We start slamming at 0.12 (60% through ch1's range) and finish at 0.2
+  const EXIT_START = 0.12;
+  const EXIT_END   = 0.21;
 
-      // When scrolling BACK into ch1, panel comes back
-      if (ch1Progress < 0.7) {
-        const returnProgress = Math.min(1, ch1Progress / 0.7);
-        if (returnProgress > 0.01) {
-          gsap.set(panel, {
-            x: 0, opacity: 1, pointerEvents: 'auto'
-          });
-        }
-      }
+  if (scrollProgress <= EXIT_START) {
+    // Fully visible in ch1
+    if (window._ch1Slammed) {
+      // Scrolled BACK - slam text back in from left wall
+      window._ch1Slammed = false;
+      gsap.fromTo(panel,
+        { x: -900, opacity: 0, rotation: -6, skewX: -12 },
+        { x: 0, opacity: 1, rotation: 0, skewX: 0, duration: 0.55, ease: 'back.out(1.7)' }
+      );
+    } else {
+      gsap.set(panel, { x: 0, opacity: 1, rotation: 0, pointerEvents: 'auto' });
     }
-  });
+  } else if (scrollProgress > EXIT_START && scrollProgress < EXIT_END) {
+    // Exiting ch1 - text SLAMS into the left wall
+    const t = (scrollProgress - EXIT_START) / (EXIT_END - EXIT_START); // 0→1
+    // Use a power curve so it accelerates like it hit something
+    const eased = t * t * t;
+    gsap.set(panel, {
+      x: -eased * 1000,
+      opacity: Math.max(0, 1 - t * 1.5),
+      rotation: -eased * 10,
+      skewX: -eased * 15,
+      pointerEvents: t > 0.2 ? 'none' : 'auto'
+    });
+    if (t > 0.95) window._ch1Slammed = true;
+  } else {
+    // Past ch1 entirely
+    gsap.set(panel, { x: -1000, opacity: 0, pointerEvents: 'none' });
+    window._ch1Slammed = true;
+  }
 }
 
 
