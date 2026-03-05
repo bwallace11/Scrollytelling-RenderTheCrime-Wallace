@@ -1053,7 +1053,6 @@ button:focus-visible, [role="button"]:focus-visible {
 }
 
 /* ── Darkroom photo varied sizing ── */
-#drphoto-victim   .photo-frame { /* portrait: taller */ }
 #drphoto-doctor   .photo-frame img { width: 120px; height: 120px; }
 #drphoto-widow    .photo-frame img { width: 90px; height: 90px; }
 #drphoto-butler   .photo-frame img { width: 130px; height: 130px; }
