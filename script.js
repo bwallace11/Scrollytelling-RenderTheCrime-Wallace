@@ -635,72 +635,78 @@ function initChapter1_Flashlight() {
 
 
 /* ─────────────────────────────────────────────
-   CH1 STICKY TEXT: stays with scroll, slams out
+   CH1 STICKY TEXT — force fixed position via JS
+   Items slam in staggered on enter.
+   Panel slams into left wall when scrolling to ch2.
+   Slams back in when scrolling back.
    ───────────────────────────────────────────── */
 function initCh1StickyText() {
   const panel = document.querySelector('#ch1-text-panel');
   if (!panel) return;
 
-  const items = panel.querySelectorAll('.chapter-label, .chapter-title, .chapter-subtitle, .chapter-body, .code-block, .metaphor-line');
+  // Force fixed positioning via JS style (overrides .text-panel absolute)
+  panel.style.cssText = 'position:fixed!important;left:28px;top:60px;z-index:1000;max-width:380px;padding:28px 24px;';
+
+  const items = Array.from(panel.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block,.metaphor-line'));
 
   if (prefersReducedMotion) {
-    gsap.set(panel, { opacity: 1, x: 0 });
-    gsap.set(items, { opacity: 1, x: 0 });
+    items.forEach(el => { el.style.opacity='1'; el.style.transform=''; });
+    window._ch1Panel = panel;
+    window._ch1Slammed = false;
     return;
   }
 
-  // Animate each text item SLAMMING IN from the left on load
-  gsap.set(items, { opacity: 0, x: -120, skewX: -8 });
+  // SLAM IN: each line flies in from the left wall, staggered
+  gsap.set(items, { opacity: 0, x: -180, skewX: -10, rotation: -2 });
   gsap.to(items, {
-    opacity: 1, x: 0, skewX: 0,
-    duration: 0.7, stagger: 0.11,
-    ease: 'power4.out', delay: 0.6
+    opacity: 1, x: 0, skewX: 0, rotation: 0,
+    duration: 0.65,
+    stagger: 0.1,
+    ease: 'power4.out',
+    delay: 0.5
   });
 
-  // Store reference so initHorizontalScroll can call updateCh1Text(progress)
   window._ch1Panel = panel;
   window._ch1Slammed = false;
 }
 
-// Called from inside the main horizontal scroll onUpdate
-function updateCh1Text(scrollProgress) {
+// Called every frame from the main ScrollTrigger onUpdate
+function updateCh1Text(p) {
   const panel = window._ch1Panel;
   if (!panel) return;
 
-  // totalChapters = 5. Ch1 occupies scroll progress 0 → 0.2 (1/5)
-  // We start slamming at 0.12 (60% through ch1's range) and finish at 0.2
-  const EXIT_START = 0.12;
-  const EXIT_END   = 0.21;
+  // Ch1 = progress 0 → ~0.205 (1/4.88 of scroll range with totalWidth math)
+  // Conservative: start exit at progress 0.11, fully gone by 0.22
+  const S = 0.11, E = 0.22;
 
-  if (scrollProgress <= EXIT_START) {
-    // Fully visible in ch1
+  if (p <= S) {
     if (window._ch1Slammed) {
-      // Scrolled BACK - slam text back in from left wall
       window._ch1Slammed = false;
+      // SLAM BACK IN from left wall
       gsap.fromTo(panel,
-        { x: -900, opacity: 0, rotation: -6, skewX: -12 },
-        { x: 0, opacity: 1, rotation: 0, skewX: 0, duration: 0.55, ease: 'back.out(1.7)' }
+        { x: -1100, opacity: 0, rotation: -8, skewX: -14 },
+        { x: 0,     opacity: 1, rotation: 0,  skewX: 0,
+          duration: 0.6, ease: 'back.out(1.4)',
+          onStart: () => { panel.style.pointerEvents = 'auto'; }
+        }
       );
-    } else {
-      gsap.set(panel, { x: 0, opacity: 1, rotation: 0, pointerEvents: 'auto' });
     }
-  } else if (scrollProgress > EXIT_START && scrollProgress < EXIT_END) {
-    // Exiting ch1 - text SLAMS into the left wall
-    const t = (scrollProgress - EXIT_START) / (EXIT_END - EXIT_START); // 0→1
-    // Use a power curve so it accelerates like it hit something
-    const eased = t * t * t;
+  } else if (p < E) {
+    // SLAM OUT: accelerates into wall (cubic ease-in feel via manual t^3)
+    const t = (p - S) / (E - S);
+    const e = t * t * t;
+    panel.style.pointerEvents = 'none';
     gsap.set(panel, {
-      x: -eased * 1000,
-      opacity: Math.max(0, 1 - t * 1.5),
-      rotation: -eased * 10,
-      skewX: -eased * 15,
-      pointerEvents: t > 0.2 ? 'none' : 'auto'
+      x:        -e * 1200,
+      opacity:  Math.max(0, 1 - t * 1.6),
+      rotation: -e * 12,
+      skewX:    -e * 18
     });
-    if (t > 0.95) window._ch1Slammed = true;
+    if (t > 0.9) window._ch1Slammed = true;
   } else {
-    // Past ch1 entirely
-    gsap.set(panel, { x: -1000, opacity: 0, pointerEvents: 'none' });
+    gsap.set(panel, { x: -1200, opacity: 0, rotation: -12 });
     window._ch1Slammed = true;
+    panel.style.pointerEvents = 'none';
   }
 }
 
@@ -863,17 +869,25 @@ function initChapter3_EvidenceWeb() {
       console.log('%c📌 ' + (label || 'Item'), 'color: #ffaa00; font-weight:bold;');
       console.log('  dataset.info →', info);
 
-      // ── Draw a single string from this item to the LAST clicked item ──
-      // This creates one continuous chain through all pins, not a messy web
+      const board   = document.querySelector('#corkboard');
+      const svg     = document.querySelector('#evidence-strings');
+      const textPin = document.querySelector('#ch3-text-panel');
+
       if (!clickedBoardItems.includes(this)) {
-        if (clickedBoardItems.length > 0) {
-          const board = document.querySelector('#corkboard');
-          const svg   = document.querySelector('#evidence-strings');
-          if (board && svg) {
-            const boardRect  = board.getBoundingClientRect();
-            const newCenter  = getElementCenter(this, boardRect);
+        if (board && svg) {
+          const boardRect = board.getBoundingClientRect();
+          const newCenter = getElementCenter(this, boardRect);
+
+          // Connect to previous item (chain)
+          if (clickedBoardItems.length > 0) {
             const prevCenter = getElementCenter(clickedBoardItems[clickedBoardItems.length - 1], boardRect);
             drawString(svg, prevCenter.x, prevCenter.y, newCenter.x, newCenter.y);
+          }
+
+          // ALSO connect this item to the center text panel
+          if (textPin) {
+            const panelCenter = getElementCenter(textPin, boardRect);
+            drawString(svg, newCenter.x, newCenter.y, panelCenter.x, panelCenter.y, 'rgba(61,127,255,0.5)');
           }
         }
         clickedBoardItems.push(this);
@@ -913,12 +927,11 @@ function getElementCenter(el, boardRect) {
   };
 }
 
-function drawString(svg, x1, y1, x2, y2) {
-  // Decide color based on whether connecting evidence↔evidence, suspect↔suspect, or cross
+function drawString(svg, x1, y1, x2, y2, color) {
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   line.setAttribute('x1', x1); line.setAttribute('y1', y1);
   line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-  line.setAttribute('stroke', '#cc1500');
+  line.setAttribute('stroke', color || '#cc1500');
   line.setAttribute('stroke-width', '1.5');
   line.setAttribute('stroke-dasharray', '600');
   line.setAttribute('stroke-dashoffset', '600');

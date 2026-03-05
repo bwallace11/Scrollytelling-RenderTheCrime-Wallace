@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/tokens.css" />
-  <link rel="stylesheet" href="styles/layout.css" />
-  <link rel="stylesheet" href="styles/animations.css" />
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="layout.css" />
+  <link rel="stylesheet" href="animations.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 </head>
@@ -502,14 +502,15 @@ console.log("Clue:", clue);</div>
         <div id="ch3-click-hint" style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-family:var(--font-ui);font-size:.54rem;letter-spacing:.25em;color:rgba(144,144,170,.38);text-transform:uppercase;z-index:8;pointer-events:none;">
           CLICK CARDS &amp; PHOTOS — WATCH THE WEB FORM
         </div>
-      </div>
 
-      <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:8px;right:8px;z-index:50;background:rgba(3,2,10,.92);border:1px solid rgba(61,127,255,.15);padding:16px;max-width:230px;">
-        <p class="chapter-label">Chapter 03 — The System</p>
-        <h2 class="chapter-title" id="ch3-title" style="font-size:1.4rem;">The Crime<br>Board</h2>
-        <p class="chapter-subtitle" style="font-size:.87rem;">data-* attributes</p>
-        <p class="chapter-body" style="font-size:.79rem;">Every pin hides a secret in HTML. Click cards or suspect photos — JS reads the <code style="color:var(--color-green-term)">dataset</code> property to surface it. Each new click draws a red string connecting evidence.</p>
-        <div class="code-block" style="font-size:.65rem;">&lt;div data-info="2:17 AM"&gt;
+        <!-- Text panel INSIDE corkboard so strings can connect to it -->
+        <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:8px;right:8px;z-index:6;background:rgba(3,2,10,.92);border:1px solid rgba(61,127,255,.15);padding:16px;max-width:220px;pointer-events:none;">
+          <div class="pin" style="background:var(--color-blue-neon);box-shadow:0 0 8px var(--color-blue-neon);"></div>
+          <p class="chapter-label">Chapter 03 — The System</p>
+          <h2 class="chapter-title" id="ch3-title" style="font-size:1.4rem;">The Crime<br>Board</h2>
+          <p class="chapter-subtitle" style="font-size:.87rem;">data-* attributes</p>
+          <p class="chapter-body" style="font-size:.79rem;">Every pin hides a secret in HTML. Click cards or suspect photos — JS reads the <code style="color:var(--color-green-term)">dataset</code> property to surface it. Each new click draws a red string connecting evidence.</p>
+          <div class="code-block" style="font-size:.65rem;">&lt;div data-info="2:17 AM"&gt;
 
 // JS reads hidden data:
 card.dataset.info
@@ -517,6 +518,7 @@ card.dataset.info
 
 // Draws a new string:
 svg.appendChild(line);</div>
+        </div>
       </div>
 
     </article>
@@ -911,7 +913,7 @@ getComputedStyle(root)
   </div><!-- /scroll-wrapper -->
   </main>
 
-  <script src="main.js"></script>
+  <script src="script.js"></script>
 
 </body>
 </html>
